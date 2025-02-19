@@ -3,15 +3,16 @@ import { Index } from "solid-js";
 import * as Tone from "tone";
 import { Times } from "./Times";
 import { useActions, useStore } from "~/store";
+import { getSynth } from "~/utils";
 
 const notes = 12;
 
 export function Guitar() {
   const { insertNote } = useActions();
   const store = useStore();
-  const synth = new Tone.PolySynth().toDestination();
 
-  function play(string: number, i: number) {
+  async function play(string: number, i: number) {
+    const synth = await getSynth();
     const tone = Tone.Frequency(store.strings[string]).transpose(i);
     console.log("play", tone.toNote());
     synth.triggerAttackRelease(tone.toFrequency(), "8n");

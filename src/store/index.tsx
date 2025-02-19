@@ -3,17 +3,10 @@
 
 import { makePersisted } from "@solid-primitives/storage";
 import hotkeys from "hotkeys-js";
-import {
-  Accessor,
-  createContext,
-  createEffect,
-  createSignal,
-  onCleanup,
-  ParentProps,
-  useContext,
-} from "solid-js";
+import { createContext, onCleanup, ParentProps, useContext } from "solid-js";
 import { createStore, produce, unwrap } from "solid-js/store";
 import * as Tone from "tone";
+import { getSynth } from "~/utils";
 
 type NoteCol = {
   t: string;
@@ -41,8 +34,6 @@ const StoreContext = createContext<[Store, Actions]>();
 
 export const useStore = () => useContext(StoreContext)![0];
 export const useActions = () => useContext(StoreContext)![1];
-
-const STORE_KEY = "tabs";
 
 export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
   const [store, setStore] = makePersisted(
@@ -133,8 +124,9 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
     );
   };
 
-  const play = () => {
-    const synth = new Tone.FMSynth().toDestination();
+  const play = async () => {
+    const synth = await getSynth();
+    //const synth = new Tone.FMSynth().toDestination();
     const tones = props.strings.map((string) => Tone.Frequency(string));
 
     const t = Tone.getTransport();

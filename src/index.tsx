@@ -4,7 +4,7 @@ import { Guitar } from "./components/Guitar";
 import "./index.css";
 import { Grid } from "./components/Grid";
 import { StoreProvider, useStore } from "./store";
-import { HStack, VStack } from "@styles/jsx";
+import { VStack } from "@styles/jsx";
 
 const root = document.getElementById("root");
 

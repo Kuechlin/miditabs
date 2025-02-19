@@ -1,4 +1,4 @@
-import { For, Index, Show } from "solid-js";
+import { For, Index } from "solid-js";
 import { css } from "@styles/css";
 import { HStack, VStack } from "@styles/jsx";
 import { useActions, useStore } from "~/store";
