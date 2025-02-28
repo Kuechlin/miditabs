@@ -21,7 +21,11 @@ export function Grid() {
                 {(_, y) => (
                   <div
                     class={styles.cell}
-                    classList={{ [styles.block]: x() % 8 === 0 }}
+                    classList={{
+                      [styles.block]: x() % 8 === 0 || x() % 8 === 7,
+                      [styles.block_start]: x() % 8 === 0,
+                      [styles.block_end]: x() % 8 === 7,
+                    }}
                     onClick={() => moveTo(x(), y)}
                     bool:data-selected={
                       store.cursor.y === y && store.cursor.x === x()
@@ -95,8 +99,7 @@ const styles = {
       bg: "black",
       top: 0,
       bottom: 0,
-      left: "-2px",
-      width: "4px",
+      width: "2px",
     },
     _first: {
       _after: {
@@ -109,6 +112,8 @@ const styles = {
       },
     },
   }),
+  block_start: css({ _after: { left: 0 } }),
+  block_end: css({ _after: { right: 0 } }),
   button: css({
     bg: "blue.800",
     borderRadius: "xs",

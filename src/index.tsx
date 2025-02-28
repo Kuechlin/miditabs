@@ -5,6 +5,7 @@ import "./index.css";
 import { Grid } from "./components/Grid";
 import { StoreProvider, useStore } from "./store";
 import { VStack } from "@styles/jsx";
+import { Strings } from "./components/Strings";
 
 const root = document.getElementById("root");
 
@@ -12,6 +13,7 @@ function Root() {
   return (
     <StoreProvider strings={["E4", "B3", "G3", "D3", "A2", "E2"]}>
       <VStack alignItems="stretch">
+        <Strings />
         <Guitar />
         <Grid />
         {import.meta.env.DEV && <Dev />}

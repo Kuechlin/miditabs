@@ -5,6 +5,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import hotkeys, { KeyHandler } from "hotkeys-js";
 import { createContext, onCleanup, ParentProps, useContext } from "solid-js";
 import { createStore, produce, unwrap } from "solid-js/store";
+import { times } from "~/components/Times";
 import { playNotes, playNote } from "~/utils";
 
 export type NoteCol = {
@@ -27,6 +28,10 @@ export type Actions = {
   insertNote(string: number, index: number): void;
   moveTo(x: number, y: number): void;
   play(): void;
+  setString(i: number, val: string): void;
+  addString(): void;
+  removeString(): void;
+  setStrings(strings: string[]): void;
 };
 
 const StoreContext = createContext<[Store, Actions]>();
@@ -47,26 +52,10 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
     createStore<Store>({
       cursor: { x: 0, y: 0 },
       strings: props.strings,
-      notes: [
-        {
-          t: "8n",
-          notes: {
-            "5": 1,
-          },
-        },
-        {
-          t: "8n",
-          notes: {
-            "5": 2,
-          },
-        },
-        {
-          t: "8n",
-          notes: {
-            "5": 3,
-          },
-        },
-      ],
+      notes: times(8, () => ({
+        t: "8n",
+        notes: {},
+      })),
     }),
     {
       storage: localStorage,
@@ -152,6 +141,22 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
       }),
     );
   };
+  const addString = () => {
+    setStore("strings", store.strings.length, "C2");
+  };
+  const setString = (i: number, val: string) => {
+    setStore("strings", i, val);
+  };
+  const removeString = () => {
+    const i = store.strings.length - 1;
+    setStore("strings", (strings) => {
+      const next = [...strings];
+      next.splice(i, 1);
+      return next;
+    });
+    if (store.cursor.y === i) setStore("cursor", "y", i - 1);
+  };
+  const setStrings = (strings: string[]) => setStore("strings", strings);
 
   const play = () => void playNotes(store.strings, store.notes, moveTo);
 
@@ -176,6 +181,10 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
           insertNote,
           moveTo,
           play,
+          setString,
+          addString,
+          removeString,
+          setStrings,
         },
       ]}
     >
