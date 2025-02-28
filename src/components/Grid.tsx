@@ -1,18 +1,10 @@
-import { For, Index } from "solid-js";
 import { css } from "@styles/css";
 import { HStack, VStack } from "@styles/jsx";
+import { For, Index } from "solid-js";
 import { useActions, useStore } from "~/store";
 
 export function Grid() {
-  const {
-    play,
-    moveLeft,
-    moveRight,
-    moveTo,
-    removeNotes,
-    deleteCol,
-    insertCol,
-  } = useActions();
+  const { play, moveTo } = useActions();
   const store = useStore();
   return (
     <VStack alignItems="stretch">
@@ -20,35 +12,20 @@ export function Grid() {
         <button class={styles.button} onClick={play}>
           play
         </button>
-        <button class={styles.button} onClick={moveLeft}>
-          left
-        </button>
-        <button class={styles.button} onClick={moveRight}>
-          right
-        </button>
-        <button class={styles.button} onClick={removeNotes}>
-          clear
-        </button>
-        <button class={styles.button} onClick={deleteCol}>
-          delete
-        </button>
-        <button class={styles.button} onClick={insertCol}>
-          insert
-        </button>
       </HStack>
       <div class={styles.grid}>
         <For each={store.notes}>
           {(note, x) => (
-            <div
-              class={styles.col}
-              bool:data-selected={store.cursor === x()}
-              onClick={() => moveTo(x())}
-            >
+            <div class={styles.col} bool:data-selected={store.cursor.x === x()}>
               <Index each={store.strings}>
                 {(_, y) => (
                   <div
                     class={styles.cell}
                     classList={{ [styles.block]: x() % 8 === 0 }}
+                    onClick={() => moveTo(x(), y)}
+                    bool:data-selected={
+                      store.cursor.y === y && store.cursor.x === x()
+                    }
                   >
                     <span>{note.notes[y] ?? ""}</span>
                   </div>
@@ -67,11 +44,12 @@ const styles = {
   grid: css({
     display: "flex",
     width: "100%",
-    overflowX: "scroll",
+    flexWrap: "wrap",
   }),
   col: css({
     _selected: {
-      bg: "neutral.900",
+      bg: "neutral.800",
+      borderRadius: "16px",
     },
   }),
   cell: css({
@@ -83,6 +61,8 @@ const styles = {
     color: "white",
     outline: "none",
     position: "relative",
+    cursor: "pointer",
+    userSelect: "none",
     _before: {
       content: "' '",
       display: "block",
@@ -94,6 +74,11 @@ const styles = {
       height: "2px",
       zIndex: 1,
     },
+    _selected: {
+      bg: "neutral.900",
+      borderRadius: "50%",
+      color: "blue.400",
+    },
     "& span": {
       zIndex: 2,
     },
@@ -102,7 +87,27 @@ const styles = {
     color: "white",
   }),
   block: css({
-    borderLeft: "4px solid black",
+    breakAfter: "always",
+    _after: {
+      content: "' '",
+      display: "flex",
+      position: "absolute",
+      bg: "black",
+      top: 0,
+      bottom: 0,
+      left: "-2px",
+      width: "4px",
+    },
+    _first: {
+      _after: {
+        top: "calc(50%)",
+      },
+    },
+    _last: {
+      _after: {
+        bottom: "calc(50%)",
+      },
+    },
   }),
   button: css({
     bg: "blue.800",
