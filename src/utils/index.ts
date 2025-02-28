@@ -25,6 +25,7 @@ export async function playNote(strings: string[], y: number, i: number) {
 export async function playNotes(
   strings: string[],
   notes: NoteCol[],
+  bpm: number,
   moveTo: (x: number, y: number) => void,
 ) {
   const synth = await getSynth();
@@ -32,6 +33,7 @@ export async function playNotes(
 
   const t = Tone.getTransport();
   if (t.state === "started") return;
+  t.bpm.value = bpm;
   synth.sync();
   let delay = 0;
   for (let x = 0; x < notes.length; x++) {

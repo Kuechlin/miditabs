@@ -6,37 +6,18 @@ import { useActions, useStore } from "~/store";
 const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const octaves = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
-const guitar = ["E4", "B3", "G3", "D3", "A2", "E2"];
-const bass = ["G2", "D2", "A1", "E1"];
-
 export function Strings() {
   const store = useStore();
-  const { addString, removeString, setString, setStrings } = useActions();
+  const { setString } = useActions();
 
   return (
-    <>
-      <HStack>
-        <button class={styles.button} onClick={addString}>
-          add string
-        </button>
-        <button class={styles.button} onClick={removeString}>
-          remove string
-        </button>
-        <button class={styles.button} onClick={() => setStrings(guitar)}>
-          guitar
-        </button>
-        <button class={styles.button} onClick={() => setStrings(bass)}>
-          bass
-        </button>
-      </HStack>
-      <HStack>
-        <Index each={store.strings}>
-          {(item, i) => (
-            <StringInput value={item()} onChange={(val) => setString(i, val)} />
-          )}
-        </Index>
-      </HStack>
-    </>
+    <HStack>
+      <Index each={store.strings}>
+        {(item, i) => (
+          <StringInput value={item()} onChange={(val) => setString(i, val)} />
+        )}
+      </Index>
+    </HStack>
   );
 }
 
@@ -70,9 +51,6 @@ function StringInput(props: { value: string; onChange(value: string): void }) {
 }
 
 const styles = {
-  button: css({
-    cursor: "pointer",
-  }),
   input: css({
     cursor: "pointer",
     border: "2px solid black",

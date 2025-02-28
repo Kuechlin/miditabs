@@ -20,6 +20,7 @@ export type Point = {
 
 export type Store = {
   cursor: Point;
+  bpm: number;
   notes: NoteCol[];
   strings: string[];
 };
@@ -32,6 +33,7 @@ export type Actions = {
   addString(): void;
   removeString(): void;
   setStrings(strings: string[]): void;
+  setBpm(v: string | number): void;
 };
 
 const StoreContext = createContext<[Store, Actions]>();
@@ -51,6 +53,7 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
   const [store, setStore] = makePersisted(
     createStore<Store>({
       cursor: { x: 0, y: 0 },
+      bpm: 120,
       strings: props.strings,
       notes: times(8, () => ({
         t: "8n",
@@ -158,7 +161,13 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
   };
   const setStrings = (strings: string[]) => setStore("strings", strings);
 
-  const play = () => void playNotes(store.strings, store.notes, moveTo);
+  const play = () =>
+    void playNotes(store.strings, store.notes, store.bpm, moveTo);
+
+  const setBpm = (v: string | number) => {
+    const num = typeof v === "number" ? v : parseInt(v);
+    setStore("bpm", isNaN(num) ? 120 : num);
+  };
 
   hotkeys("left,h", preventDefault(moveLeft));
   hotkeys("right,l", preventDefault(moveRight));
@@ -185,6 +194,7 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
           addString,
           removeString,
           setStrings,
+          setBpm,
         },
       ]}
     >

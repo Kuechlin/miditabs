@@ -1,46 +1,37 @@
 import { css } from "@styles/css";
-import { HStack, VStack } from "@styles/jsx";
 import { For, Index } from "solid-js";
 import { useActions, useStore } from "~/store";
 
 export function Grid() {
-  const { play, moveTo } = useActions();
+  const { moveTo } = useActions();
   const store = useStore();
   return (
-    <VStack alignItems="stretch">
-      <HStack>
-        <button class={styles.button} onClick={play}>
-          play
-        </button>
-      </HStack>
-      <div class={styles.grid}>
-        <For each={store.notes}>
-          {(note, x) => (
-            <div class={styles.col} bool:data-selected={store.cursor.x === x()}>
-              <Index each={store.strings}>
-                {(_, y) => (
-                  <div
-                    class={styles.cell}
-                    classList={{
-                      [styles.block]: x() % 8 === 0 || x() % 8 === 7,
-                      [styles.block_start]: x() % 8 === 0,
-                      [styles.block_end]: x() % 8 === 7,
-                    }}
-                    onClick={() => moveTo(x(), y)}
-                    bool:data-selected={
-                      store.cursor.y === y && store.cursor.x === x()
-                    }
-                  >
-                    <span>{note.notes[y] ?? ""}</span>
-                  </div>
-                )}
-              </Index>
-            </div>
-          )}
-        </For>
-        <div></div>
-      </div>
-    </VStack>
+    <div class={styles.grid}>
+      <For each={store.notes}>
+        {(note, x) => (
+          <div class={styles.col} bool:data-selected={store.cursor.x === x()}>
+            <Index each={store.strings}>
+              {(_, y) => (
+                <div
+                  class={styles.cell}
+                  classList={{
+                    [styles.block]: x() % 8 === 0 || x() % 8 === 7,
+                    [styles.block_start]: x() % 8 === 0,
+                    [styles.block_end]: x() % 8 === 7,
+                  }}
+                  onClick={() => moveTo(x(), y)}
+                  bool:data-selected={
+                    store.cursor.y === y && store.cursor.x === x()
+                  }
+                >
+                  <span>{note.notes[y] ?? ""}</span>
+                </div>
+              )}
+            </Index>
+          </div>
+        )}
+      </For>
+    </div>
   );
 }
 
