@@ -6,7 +6,7 @@ import hotkeys, { KeyHandler } from "hotkeys-js";
 import { createContext, onCleanup, ParentProps, useContext } from "solid-js";
 import { createStore, produce, unwrap } from "solid-js/store";
 import { times } from "~/components/Times";
-import { playNotes, playNote } from "~/utils";
+import { Instruments, playNote, playNotes } from "./instruments";
 
 export type NoteCol = {
   t: string;
@@ -21,6 +21,7 @@ export type Point = {
 export type Store = {
   cursor: Point;
   bpm: number;
+  instrument: Instruments;
   notes: NoteCol[];
   strings: string[];
 };
@@ -32,7 +33,7 @@ export type Actions = {
   setString(i: number, val: string): void;
   addString(): void;
   removeString(): void;
-  setStrings(strings: string[]): void;
+  setStrings(inst: Instruments, strings: string[]): void;
   setBpm(v: string | number): void;
 };
 
@@ -53,6 +54,7 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
   const [store, setStore] = makePersisted(
     createStore<Store>({
       cursor: { x: 0, y: 0 },
+      instrument: "guitar_electric",
       bpm: 120,
       strings: props.strings,
       notes: times(8, () => ({
@@ -80,13 +82,13 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
     }
     setStore("cursor", { x: next });
   };
-  const moveUp = () => {
+  const moveDown = () => {
     const { strings, cursor } = store;
     const next = cursor.y + 1;
     if (next >= strings.length) return;
     setStore("cursor", { y: next });
   };
-  const moveDown = () => {
+  const moveUp = () => {
     const { cursor } = store;
     const next = cursor.y - 1;
     if (next < 0) return;
@@ -106,7 +108,7 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
         notes[c.x].notes[y] = index;
       }),
     );
-    playNote(store.strings, y, index);
+    playNote(store.instrument, store.strings, y, index);
   };
   const insertKey: KeyHandler = (evt) => {
     const index = nums.indexOf(evt.key);
@@ -159,10 +161,19 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
     });
     if (store.cursor.y === i) setStore("cursor", "y", i - 1);
   };
-  const setStrings = (strings: string[]) => setStore("strings", strings);
+  const setStrings = (inst: Instruments, strings: string[]) => {
+    setStore("strings", strings);
+    setStore("instrument", inst);
+  };
 
   const play = () =>
-    void playNotes(store.strings, store.notes, store.bpm, moveTo);
+    void playNotes(
+      store.instrument,
+      store.strings,
+      store.notes,
+      store.bpm,
+      moveTo,
+    );
 
   const setBpm = (v: string | number) => {
     const num = typeof v === "number" ? v : parseInt(v);

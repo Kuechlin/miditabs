@@ -2,9 +2,7 @@ import { css } from "@styles/css";
 import { HStack } from "@styles/jsx";
 import { Index } from "solid-js";
 import { useActions, useStore } from "~/store";
-
-const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const octaves = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+import { notes, octaves } from "~/store/instruments";
 
 export function Strings() {
   const store = useStore();

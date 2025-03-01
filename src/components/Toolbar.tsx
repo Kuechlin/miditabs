@@ -3,9 +3,7 @@ import { Button } from "@kobalte/core/button";
 import { css } from "@styles/css";
 import { HStack } from "@styles/jsx";
 import { useActions, useStore } from "~/store";
-
-const guitar = ["E4", "B3", "G3", "D3", "A2", "E2"];
-const bass = ["G2", "D2", "A1", "E1"];
+import { instruments } from "~/store/instruments";
 
 export function Toolbar() {
   const store = useStore();
@@ -21,10 +19,20 @@ export function Toolbar() {
       <Button class={styles.button} onClick={removeString}>
         remove string
       </Button>
-      <Button class={styles.button} onClick={() => setStrings(guitar)}>
+      <Button
+        class={styles.button}
+        onClick={() =>
+          setStrings("guitar_electric", instruments.guitar_electric.notes)
+        }
+      >
         set guitar
       </Button>
-      <Button class={styles.button} onClick={() => setStrings(bass)}>
+      <Button
+        class={styles.button}
+        onClick={() =>
+          setStrings("bass_electric", instruments.bass_electric.notes)
+        }
+      >
         set bass
       </Button>
       <NumberField rawValue={store.bpm} onRawValueChange={setBpm}>
