@@ -97,6 +97,7 @@ export async function playNote(
 export function stopNotes() {
   const t = Tone.getTransport();
   t.stop(0);
+  t.cancel();
 }
 
 export async function playNotes(
@@ -114,6 +115,7 @@ export async function playNotes(
     if (t.state === "started") return;
     t.bpm.value = bpm;
     synth.sync();
+
     let delay = 0;
     for (let x = 0; x < notes.length; x++) {
       const col = notes[x];
@@ -129,6 +131,7 @@ export async function playNotes(
     }
     t.scheduleOnce(() => {
       t.stop(0);
+      t.cancel();
       resolve(null);
     }, delay + 0.5);
     t.start();
