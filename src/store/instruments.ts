@@ -67,7 +67,10 @@ export const instruments = {
 
 export type Instruments = keyof typeof instruments;
 
+const cache = new Map<string, Sampler>();
+
 export async function getInstrument(type: keyof typeof instruments) {
+  if (cache.has(type)) return cache.get(type)!;
   const sampler = new Sampler({
     baseUrl: `/miditabs/${type}/`,
     urls: instruments[type].urls,
@@ -76,6 +79,7 @@ export async function getInstrument(type: keyof typeof instruments) {
     },
   }).toDestination();
   await Tone.loaded();
+  cache.set(type, sampler);
   return sampler;
 }
 
@@ -90,6 +94,11 @@ export async function playNote(
   synth.triggerAttackRelease(tone.toFrequency(), "8n");
 }
 
+export function stopNotes() {
+  const t = Tone.getTransport();
+  t.stop(0);
+}
+
 export async function playNotes(
   instrument: Instruments,
   strings: string[],
@@ -97,29 +106,31 @@ export async function playNotes(
   bpm: number,
   moveTo: (x: number, y: number) => void,
 ) {
-  const synth = await getInstrument(instrument);
-  const tones = strings.map((string) => Tone.Frequency(string));
+  return new Promise(async (resolve) => {
+    const synth = await getInstrument(instrument);
+    const tones = strings.map((string) => Tone.Frequency(string));
 
-  const t = Tone.getTransport();
-  if (t.state === "started") return;
-  t.bpm.value = bpm;
-  synth.sync();
-  let delay = 0;
-  for (let x = 0; x < notes.length; x++) {
-    const col = notes[x];
-    let y = 0;
-    for (const [string, index] of Object.entries(col.notes)) {
-      y = Number(string);
-      if (!tones[y]) continue;
-      const tone = tones[y].transpose(index).toFrequency();
-      synth.triggerAttackRelease(tone, col.t, delay);
+    const t = Tone.getTransport();
+    if (t.state === "started") return;
+    t.bpm.value = bpm;
+    synth.sync();
+    let delay = 0;
+    for (let x = 0; x < notes.length; x++) {
+      const col = notes[x];
+      let y = 0;
+      for (const [string, index] of Object.entries(col.notes)) {
+        y = Number(string);
+        if (!tones[y]) continue;
+        const tone = tones[y].transpose(index).toFrequency();
+        synth.triggerAttackRelease(tone, col.t, delay);
+      }
+      t.scheduleOnce(() => moveTo(x, y), delay);
+      delay += Tone.Time(col.t).toSeconds();
     }
-    t.scheduleOnce(() => moveTo(x, y), delay);
-    delay += Tone.Time(col.t).toSeconds();
-  }
-  t.scheduleOnce(() => {
-    synth.dispose();
-    t.stop(0);
-  }, delay + 0.5);
-  t.start();
+    t.scheduleOnce(() => {
+      t.stop(0);
+      resolve(null);
+    }, delay + 0.5);
+    t.start();
+  });
 }

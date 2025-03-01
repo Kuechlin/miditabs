@@ -4,15 +4,26 @@ import { css } from "@styles/css";
 import { HStack } from "@styles/jsx";
 import { useActions, useStore } from "~/store";
 import { instruments } from "~/store/instruments";
+import { Match, Switch } from "solid-js";
 
 export function Toolbar() {
   const store = useStore();
-  const { addString, removeString, setStrings, play, setBpm } = useActions();
+  const { addString, removeString, setStrings, play, pause, setBpm } =
+    useActions();
   return (
     <HStack>
-      <Button class={styles.button} onClick={play}>
-        play
-      </Button>
+      <Switch>
+        <Match when={store.state === "idle"}>
+          <Button class={styles.button} onClick={play}>
+            play
+          </Button>
+        </Match>
+        <Match when={store.state === "playing"}>
+          <Button class={styles.button} onClick={pause}>
+            stop
+          </Button>
+        </Match>
+      </Switch>
       <Button class={styles.button} onClick={addString}>
         add string
       </Button>

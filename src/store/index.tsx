@@ -6,7 +6,7 @@ import hotkeys, { KeyHandler } from "hotkeys-js";
 import { createContext, onCleanup, ParentProps, useContext } from "solid-js";
 import { createStore, produce, unwrap } from "solid-js/store";
 import { times } from "~/components/Times";
-import { Instruments, playNote, playNotes } from "./instruments";
+import { Instruments, playNote, playNotes, stopNotes } from "./instruments";
 
 export type NoteCol = {
   t: string;
@@ -18,7 +18,10 @@ export type Point = {
   y: number;
 };
 
+export type AppState = "idle" | "playing";
+
 export type Store = {
+  state: AppState;
   cursor: Point;
   bpm: number;
   instrument: Instruments;
@@ -35,6 +38,7 @@ export type Actions = {
   removeString(): void;
   setStrings(inst: Instruments, strings: string[]): void;
   setBpm(v: string | number): void;
+  pause(): void;
 };
 
 const StoreContext = createContext<[Store, Actions]>();
@@ -53,6 +57,7 @@ const nums = new Array(10).fill(0).map((_, i) => i.toString());
 export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
   const [store, setStore] = makePersisted(
     createStore<Store>({
+      state: "idle",
       cursor: { x: 0, y: 0 },
       instrument: "guitar_electric",
       bpm: 120,
@@ -166,15 +171,21 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
     setStore("instrument", inst);
   };
 
-  const play = () =>
+  const play = () => {
+    if (store.state === "playing") return;
+    setStore("state", "playing");
     void playNotes(
       store.instrument,
       store.strings,
       store.notes,
       store.bpm,
       moveTo,
-    );
-
+    ).then(() => setStore("state", "idle"));
+  };
+  const pause = () => {
+    stopNotes();
+    setStore("state", "idle");
+  };
   const setBpm = (v: string | number) => {
     const num = typeof v === "number" ? v : parseInt(v);
     setStore("bpm", isNaN(num) ? 120 : num);
@@ -205,6 +216,7 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
           addString,
           removeString,
           setStrings,
+          pause,
           setBpm,
         },
       ]}
