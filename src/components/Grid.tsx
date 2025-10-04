@@ -1,41 +1,77 @@
+import { Button } from "./atoms/Button";
+import { NumberField } from "@kobalte/core/number-field";
 import { css } from "@styles/css";
+import { HStack, VStack } from "@styles/jsx";
 import { For, Index } from "solid-js";
 import { useActions, useStore } from "~/store";
+import { NumberInput, TextInput } from "./atoms/Input";
 
-export function Grid() {
-  const { moveTo } = useActions();
+export function Grid(props: { s: number }) {
+  const { moveTo, setBpm, play, pause, removeSection } = useActions();
   const store = useStore();
+
+  const section = () => store.sections[props.s];
+  const instrument = () => store.instruments[section().instrument];
+
   return (
-    <div class={styles.grid}>
-      <For each={store.notes}>
-        {(note, x) => (
-          <div class={styles.col} bool:data-selected={store.cursor.x === x()}>
-            <Index each={store.strings}>
-              {(_, y) => (
-                <div
-                  class={styles.cell}
-                  classList={{
-                    [styles.block]: x() % 8 === 0 || x() % 8 === 7,
-                    [styles.block_start]: x() % 8 === 0,
-                    [styles.block_end]: x() % 8 === 7,
-                  }}
-                  onClick={() => moveTo(x(), y)}
-                  bool:data-selected={
-                    store.cursor.y === y && store.cursor.x === x()
-                  }
-                >
-                  <span>{note.notes[y] ?? ""}</span>
-                </div>
-              )}
-            </Index>
-          </div>
-        )}
-      </For>
-    </div>
+    <VStack alignItems="flex-start" class={styles.section}>
+      <HStack>
+        <TextInput label="section" value={section().name} />
+        <NumberInput
+          label="bpm"
+          value={section().bpm}
+          onChange={(value) => setBpm(props.s, value)}
+        />
+        <Button onClick={() => play(props.s)}>play</Button>
+        <Button onClick={pause}>stop</Button>
+        <Button mode="danger" onClick={() => removeSection(props.s)}>
+          delete
+        </Button>
+      </HStack>
+      <div class={styles.grid}>
+        <For each={section().notes}>
+          {(note, x) => (
+            <div
+              class={styles.col}
+              bool:data-selected={
+                store.cursor.s === props.s && store.cursor.x === x()
+              }
+            >
+              <Index each={instrument().strings}>
+                {(_, y) => (
+                  <div
+                    class={styles.cell}
+                    classList={{
+                      [styles.block]: x() % 8 === 0 || x() % 8 === 7,
+                      [styles.block_start]: x() % 8 === 0,
+                      [styles.block_end]: x() % 8 === 7,
+                    }}
+                    onClick={() => moveTo(props.s, x(), y)}
+                    bool:data-selected={
+                      store.cursor.s === props.s &&
+                      store.cursor.y === y &&
+                      store.cursor.x === x()
+                    }
+                  >
+                    <span>{note.notes[y] ?? ""}</span>
+                  </div>
+                )}
+              </Index>
+            </div>
+          )}
+        </For>
+      </div>
+    </VStack>
   );
 }
 
 const styles = {
+  section: css({
+    borderLeft: "8px solid",
+    borderColor: "neutral.900",
+    pl: 2,
+    borderRadius: "sm",
+  }),
   grid: css({
     display: "flex",
     width: "100%",

@@ -3,18 +3,29 @@ import { HStack } from "@styles/jsx";
 import { Index } from "solid-js";
 import { useActions, useStore } from "~/store";
 import { notes, octaves } from "~/store/instruments";
+import { Button } from "./atoms/Button";
 
-export function Strings() {
+export function Strings(props: { instrument: string }) {
   const store = useStore();
-  const { setString } = useActions();
+  const { setString, addString, removeString } = useActions();
+
+  const instrument = () => store.instruments[props.instrument];
 
   return (
     <HStack>
-      <Index each={store.strings}>
+      <Index each={instrument().strings}>
         {(item, i) => (
-          <StringInput value={item()} onChange={(val) => setString(i, val)} />
+          <StringInput
+            value={item()}
+            onChange={(val) => setString(props.instrument, i, val)}
+          />
         )}
       </Index>
+
+      <Button onClick={() => addString(props.instrument)}>add string</Button>
+      <Button onClick={() => removeString(props.instrument)}>
+        remove string
+      </Button>
     </HStack>
   );
 }
@@ -55,10 +66,14 @@ const styles = {
     _first: {
       borderLeftRadius: "md",
       borderRight: "none",
+      pl: 2,
+      py: 1,
     },
     _last: {
       borderRightRadius: "md",
       borderLeft: "none",
+      py: 1,
+      pl: 2,
     },
   }),
 };

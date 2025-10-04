@@ -8,12 +8,25 @@ import { createStore, produce, unwrap } from "solid-js/store";
 import { times } from "~/components/Times";
 import { Instruments, playNote, playNotes, stopNotes } from "./instruments";
 
+export type Section = {
+  instrument: string;
+  bpm: number;
+  name: string;
+  notes: NoteCol[];
+};
+
+export type Instrument = {
+  instrument: Instruments;
+  strings: string[];
+};
+
 export type NoteCol = {
   t: string;
   notes: Record<number, number>;
 };
 
 export type Point = {
+  s: number;
   x: number;
   y: number;
 };
@@ -23,22 +36,23 @@ export type AppState = "idle" | "playing";
 export type Store = {
   state: AppState;
   cursor: Point;
-  bpm: number;
-  instrument: Instruments;
-  notes: NoteCol[];
-  strings: string[];
+  sections: Section[];
+  instruments: Record<string, Instrument>;
 };
 
 export type Actions = {
-  insertNote(string: number, index: number): void;
-  moveTo(x: number, y: number): void;
-  play(): void;
-  setString(i: number, val: string): void;
-  addString(): void;
-  removeString(): void;
-  setStrings(inst: Instruments, strings: string[]): void;
-  setBpm(v: string | number): void;
+  insertNote(section: number, string: number, index: number): void;
+  moveTo(section: number, x: number, y: number): void;
+  play(section: number): void;
+  setString(key: string, i: number, val: string): void;
+  addString(key: string): void;
+  removeString(key: string): void;
+  setBpm(section: number, v: string | number): void;
   pause(): void;
+  addSection(): void;
+  removeSection(s: number): void;
+  exportJSON(): { data: string; filename: string };
+  importJSON(value: string): void;
 };
 
 const StoreContext = createContext<[Store, Actions]>();
@@ -54,24 +68,44 @@ const preventDefault =
   };
 const nums = new Array(10).fill(0).map((_, i) => i.toString());
 
-export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
+export function StoreProvider(props: ParentProps) {
   const [store, setStore] = makePersisted(
     createStore<Store>({
       state: "idle",
-      cursor: { x: 0, y: 0 },
-      instrument: "guitar_electric",
-      bpm: 120,
-      strings: props.strings,
-      notes: times(8, () => ({
-        t: "8n",
-        notes: {},
-      })),
+      cursor: { s: 0, x: 0, y: 0 },
+      instruments: {
+        bass: {
+          instrument: "bass_electric",
+          strings: ["G2", "D2", "A1", "E1"],
+        },
+        guitar: {
+          instrument: "bass_electric",
+          strings: ["E4", "B3", "G3", "D3", "A2", "E2"],
+        },
+      },
+      sections: [
+        {
+          name: "default",
+          instrument: "bass",
+          bpm: 120,
+          notes: times(8, () => ({
+            t: "8n",
+            notes: {},
+          })),
+        },
+      ],
     }),
     {
       storage: localStorage,
       name: "miditabs",
     },
   );
+
+  const getInstrument = (s?: number) => {
+    return store.instruments[
+      store.sections[s === undefined ? store.cursor.s : s].instrument
+    ];
+  };
 
   const moveLeft = () => {
     const { cursor } = store;
@@ -80,17 +114,18 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
     setStore("cursor", { x: next });
   };
   const moveRight = () => {
-    const { notes, cursor } = store;
+    const { sections, cursor } = store;
     const next = cursor.x + 1;
-    if (!notes[next]) {
-      setStore("notes", next, { t: "8n", notes: {} });
+    if (!sections[cursor.s].notes[next]) {
+      setStore("sections", cursor.s, "notes", next, { t: "8n", notes: {} });
     }
     setStore("cursor", { x: next });
   };
   const moveDown = () => {
-    const { strings, cursor } = store;
+    const { cursor } = store;
     const next = cursor.y + 1;
-    if (next >= strings.length) return;
+    const instrument = getInstrument();
+    if (next >= instrument.strings.length) return;
     setStore("cursor", { y: next });
   };
   const moveUp = () => {
@@ -99,11 +134,13 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
     if (next < 0) return;
     setStore("cursor", { y: next });
   };
-  const moveTo = (x: number, y: number) => {
-    setStore("cursor", { x, y });
+  const moveTo = (s: number, x: number, y: number) => {
+    setStore("cursor", { s, x, y });
   };
-  const insertNote = (y: number, index: number) => {
+  const insertNote = (s: number, y: number, index: number) => {
     setStore(
+      "sections",
+      s,
       "notes",
       produce((notes) => {
         const c = store.cursor;
@@ -113,16 +150,19 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
         notes[c.x].notes[y] = index;
       }),
     );
-    playNote(store.instrument, store.strings, y, index);
+    const instrument = getInstrument();
+    playNote(instrument.instrument, instrument.strings, y, index);
   };
   const insertKey: KeyHandler = (evt) => {
     const index = nums.indexOf(evt.key);
     console.log(evt.key, index);
     if (index === -1) return;
-    insertNote(store.cursor.y, index);
+    insertNote(store.cursor.s, store.cursor.y, index);
   };
   const removeNote = () => {
     setStore(
+      "sections",
+      store.cursor.s,
       "notes",
       produce((notes) => {
         const c = store.cursor;
@@ -132,6 +172,8 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
   };
   const deleteCol = () => {
     setStore(
+      "sections",
+      store.cursor.s,
       "notes",
       produce((notes) => {
         const c = unwrap(store).cursor;
@@ -144,6 +186,8 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
   };
   const insertCol = () => {
     setStore(
+      "sections",
+      store.cursor.s,
       "notes",
       produce((notes) => {
         const c = store.cursor.x + 1;
@@ -151,44 +195,102 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
       }),
     );
   };
-  const addString = () => {
-    setStore("strings", store.strings.length, "C2");
+  const addString = (key: string) => {
+    setStore(
+      "instruments",
+      key,
+      "strings",
+      store.instruments[key].strings.length,
+      "C2",
+    );
   };
-  const setString = (i: number, val: string) => {
-    setStore("strings", i, val);
+  const setString = (key: string, i: number, val: string) => {
+    setStore("instruments", key, "strings", i, val);
   };
-  const removeString = () => {
-    const i = store.strings.length - 1;
-    setStore("strings", (strings) => {
-      const next = [...strings];
-      next.splice(i, 1);
-      return next;
-    });
+  const removeString = (key: string) => {
+    const i = store.instruments[key].strings.length - 1;
+    setStore(
+      "instruments",
+      key,
+      "strings",
+      produce((strings) => {
+        strings.splice(i, 1);
+      }),
+    );
     if (store.cursor.y === i) setStore("cursor", "y", i - 1);
-  };
-  const setStrings = (inst: Instruments, strings: string[]) => {
-    setStore("strings", strings);
-    setStore("instrument", inst);
   };
 
   const play = () => {
     if (store.state === "playing") return;
     setStore("state", "playing");
+    const instrument = getInstrument();
     void playNotes(
-      store.instrument,
-      store.strings,
-      store.notes,
-      store.bpm,
-      moveTo,
+      instrument.instrument,
+      instrument.strings,
+      store.sections[store.cursor.s].notes,
+      store.sections[store.cursor.s].bpm,
+      (x, y) => moveTo(store.cursor.s, x, y),
     ).then(() => setStore("state", "idle"));
   };
   const pause = () => {
     stopNotes();
     setStore("state", "idle");
   };
-  const setBpm = (v: string | number) => {
+  const setBpm = (s: number, v: string | number) => {
     const num = typeof v === "number" ? v : parseInt(v);
-    setStore("bpm", isNaN(num) ? 120 : num);
+    setStore("sections", s, "bpm", isNaN(num) ? 120 : num);
+  };
+  const addSection = () => {
+    setStore("sections", store.sections.length, {
+      name: "new",
+      bpm: 120,
+      instrument: "bass",
+      notes: times(8, () => ({
+        t: "8n",
+        notes: {},
+      })),
+    });
+  };
+  const removeSection = (s: number) => {
+    setStore(
+      "sections",
+      produce((sections) => {
+        sections.splice(s, 1);
+      }),
+    );
+  };
+  const exportJSON = () => {
+    const data = {
+      instruments: unwrap(store.instruments),
+      sections: unwrap(store.sections),
+    };
+    return {
+      data: JSON.stringify(data, null, 2),
+      filename: "miditabs_export.json",
+    };
+  };
+  const importJSON = (value: string) => {
+    try {
+      const data = JSON.parse(value);
+      if (
+        data &&
+        typeof data === "object" &&
+        "instruments" in data &&
+        "sections" in data
+      ) {
+        setStore({
+          instruments: data.instruments,
+          sections: data.sections,
+          cursor: { s: 0, x: 0, y: 0 },
+          state: "idle",
+        });
+      } else {
+        throw new Error("invalid json");
+      }
+    } catch (err) {
+      console.error("Import error", err);
+      alert("Fehler beim import: " + String(err));
+    }
   };
 
   hotkeys("left,h", preventDefault(moveLeft));
@@ -215,9 +317,12 @@ export function StoreProvider(props: ParentProps<{ strings: string[] }>) {
           setString,
           addString,
           removeString,
-          setStrings,
           pause,
           setBpm,
+          addSection,
+          removeSection,
+          importJSON,
+          exportJSON,
         },
       ]}
     >

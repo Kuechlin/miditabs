@@ -1,30 +1,26 @@
 import { css } from "@styles/css";
 import { Index } from "solid-js";
 import * as Tone from "tone";
-import { useActions, useStore } from "~/store";
+import { useStore } from "~/store";
 import { Times } from "./Times";
 
 const notes = 12;
 const bars = [1, 3, 5, 7, 9, 12];
 
-export function Guitar() {
-  const { insertNote } = useActions();
+export function Guitar(props: { instrument: string }) {
   const store = useStore();
 
-  async function play(string: number, i: number) {
-    insertNote(string, i);
-  }
+  const instrument = () => store.instruments[props.instrument];
 
   return (
     <div class={styles.root}>
-      <Index each={store.strings}>
-        {(item, string) => (
+      <Index each={instrument().strings}>
+        {(item) => (
           <div class={styles.string}>
             <Times count={notes}>
               {(i) => (
                 <button
                   class={`${styles.note} ${bars.includes(i) ? styles.bar : ""}`}
-                  onClick={() => play(string, i)}
                 >
                   {Tone.Frequency(item()).transpose(i).toNote()}
                 </button>
