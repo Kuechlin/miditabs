@@ -5,6 +5,7 @@ import { useActions, useStore } from "~/store";
 import { Times } from "./Times";
 
 const notes = 12;
+const bars = [1, 3, 5, 7, 9, 12];
 
 export function Guitar() {
   const { insertNote } = useActions();
@@ -21,7 +22,10 @@ export function Guitar() {
           <div class={styles.string}>
             <Times count={notes}>
               {(i) => (
-                <button class={styles.note} onClick={() => play(string, i)}>
+                <button
+                  class={`${styles.note} ${bars.includes(i) ? styles.bar : ""}`}
+                  onClick={() => play(string, i)}
+                >
                   {Tone.Frequency(item()).transpose(i).toNote()}
                 </button>
               )}
@@ -63,6 +67,7 @@ const styles = {
     },
   }),
   note: css({
+    position: "relative",
     zIndex: 2,
     bg: "blue.500",
     height: 6,
@@ -88,6 +93,25 @@ const styles = {
     },
     _last: {
       marginRight: 8,
+    },
+  }),
+  bar: css({
+    "&::after,&::before": {
+      position: "absolute",
+      left: "calc(50% - 2px)",
+      content: "' '",
+      display: "flex",
+      backgroundColor: "black",
+      width: "4px",
+      zIndex: 1,
+    },
+    _before: {
+      top: "-4px",
+      height: "4px",
+    },
+    _after: {
+      bottom: "-4px",
+      height: "4px",
     },
   }),
 };
