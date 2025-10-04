@@ -47,7 +47,9 @@ export type Actions = {
   setString(key: string, i: number, val: string): void;
   addString(key: string): void;
   removeString(key: string): void;
+  setName(section: number, v: string): void;
   setBpm(section: number, v: string | number): void;
+  setInstrument(section: number, v: string): void;
   pause(): void;
   addSection(): void;
   removeSection(s: number): void;
@@ -240,6 +242,12 @@ export function StoreProvider(props: ParentProps) {
     const num = typeof v === "number" ? v : parseInt(v);
     setStore("sections", s, "bpm", isNaN(num) ? 120 : num);
   };
+  const setName = (s: number, v: string) => {
+    setStore("sections", s, "name", v);
+  };
+  const setInstrument = (s: number, v: string) => {
+    setStore("sections", s, "instrument", v);
+  };
   const addSection = () => {
     setStore("sections", store.sections.length, {
       name: "new",
@@ -319,6 +327,8 @@ export function StoreProvider(props: ParentProps) {
           removeString,
           pause,
           setBpm,
+          setName,
+          setInstrument,
           addSection,
           removeSection,
           importJSON,

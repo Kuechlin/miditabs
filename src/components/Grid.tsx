@@ -3,10 +3,11 @@ import { HStack, VStack } from "@styles/jsx";
 import { For, Index } from "solid-js";
 import { useActions, useStore } from "~/store";
 import { Button } from "./atoms/Button";
-import { NumberInput, TextInput } from "./atoms/Input";
+import { NumberInput, SelectInput, TextInput } from "./atoms/Input";
 
 export function Grid(props: { s: number }) {
-  const { moveTo, setBpm, play, pause, removeSection } = useActions();
+  const { moveTo, setBpm, play, pause, removeSection, setName, setInstrument } =
+    useActions();
   const store = useStore();
 
   const section = () => store.sections[props.s];
@@ -15,11 +16,21 @@ export function Grid(props: { s: number }) {
   return (
     <VStack alignItems="flex-start" class={styles.section}>
       <HStack>
-        <TextInput label="section" value={section().name} />
+        <TextInput
+          label="section"
+          value={section().name}
+          onChange={(v) => setName(props.s, v)}
+        />
         <NumberInput
           label="bpm"
           value={section().bpm}
           onChange={(value) => setBpm(props.s, value)}
+        />
+        <SelectInput
+          label="instrument"
+          value={section().instrument}
+          data={["bass", "guitar"]}
+          onChange={(value) => setInstrument(props.s, value)}
         />
         <Button onClick={() => play(props.s)}>play</Button>
         <Button onClick={pause}>stop</Button>
