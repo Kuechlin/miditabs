@@ -1,6 +1,6 @@
 import { css } from "@styles/css";
 import { HStack, VStack } from "@styles/jsx";
-import { For, Index } from "solid-js";
+import { For, Index, Show } from "solid-js";
 import { useActions, useStore } from "~/store";
 import { Button } from "./atoms/Button";
 import { NumberInput, SelectInput, TextInput } from "./atoms/Input";
@@ -56,35 +56,44 @@ export function Grid(props: { s: number }) {
         <For each={section().notes}>
           {(note, x) => {
             const t = () => Number(note.t.replace("n", ""));
+            const shouldBreak = () => {
+              const breakAfter = t() === 4 ? 8 : t() === 8 ? 4 : 2;
+              return x() > 0 && (x() / t()) % breakAfter === 0;
+            };
             return (
-              <div
-                class={styles.col}
-                bool:data-selected={
-                  store.cursor.s === props.s && store.cursor.x === x()
-                }
-              >
-                <Index each={instrument().strings}>
-                  {(_, y) => (
-                    <div
-                      class={styles.cell}
-                      classList={{
-                        [styles.block]:
-                          x() % t() === 0 || x() % t() === t() - 1,
-                        [styles.block_start]: x() % t() === 0,
-                        [styles.block_end]: x() % t() === t() - 1,
-                      }}
-                      onClick={() => moveTo(props.s, x(), y)}
-                      bool:data-selected={
-                        store.cursor.s === props.s &&
-                        store.cursor.y === y &&
-                        store.cursor.x === x()
-                      }
-                    >
-                      <span>{note.notes[y] ?? ""}</span>
-                    </div>
-                  )}
-                </Index>
-              </div>
+              <>
+                <Show when={shouldBreak()}>
+                  <div class={styles.break} />
+                </Show>
+                <div
+                  class={styles.col}
+                  bool:data-selected={
+                    store.cursor.s === props.s && store.cursor.x === x()
+                  }
+                >
+                  <Index each={instrument().strings}>
+                    {(_, y) => (
+                      <div
+                        class={styles.cell}
+                        classList={{
+                          [styles.block]:
+                            x() % t() === 0 || x() % t() === t() - 1,
+                          [styles.block_start]: x() % t() === 0,
+                          [styles.block_end]: x() % t() === t() - 1,
+                        }}
+                        onClick={() => moveTo(props.s, x(), y)}
+                        bool:data-selected={
+                          store.cursor.s === props.s &&
+                          store.cursor.y === y &&
+                          store.cursor.x === x()
+                        }
+                      >
+                        <span>{note.notes[y] ?? ""}</span>
+                      </div>
+                    )}
+                  </Index>
+                </div>
+              </>
             );
           }}
         </For>
@@ -169,6 +178,7 @@ const styles = {
   }),
   block_start: css({ _after: { left: 0 } }),
   block_end: css({ _after: { right: 0 } }),
+  break: css({ flexBasis: "100%", width: 0, height: 0 }),
   button: css({
     bg: "blue.800",
     borderRadius: "xs",

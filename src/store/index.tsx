@@ -110,6 +110,17 @@ export function StoreProvider(props: ParentProps) {
     ];
   };
 
+  const insertCol = () => {
+    setStore(
+      "sections",
+      store.cursor.s,
+      "notes",
+      produce((notes) => {
+        const c = store.cursor.x + 1;
+        notes.splice(c, 0, { t: notes[0].t, notes: {} });
+      }),
+    );
+  };
   const moveLeft = () => {
     const { cursor } = store;
     const next = cursor.x - 1;
@@ -120,7 +131,7 @@ export function StoreProvider(props: ParentProps) {
     const { sections, cursor } = store;
     const next = cursor.x + 1;
     if (!sections[cursor.s].notes[next]) {
-      setStore("sections", cursor.s, "notes", next, { t: "8n", notes: {} });
+      insertCol();
     }
     setStore("cursor", { x: next });
   };
@@ -187,17 +198,7 @@ export function StoreProvider(props: ParentProps) {
       }),
     );
   };
-  const insertCol = () => {
-    setStore(
-      "sections",
-      store.cursor.s,
-      "notes",
-      produce((notes) => {
-        const c = store.cursor.x + 1;
-        notes.splice(c, 0, { t: "8n", notes: {} });
-      }),
-    );
-  };
+
   const addString = (key: string) => {
     setStore(
       "instruments",
