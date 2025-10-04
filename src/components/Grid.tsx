@@ -6,8 +6,16 @@ import { Button } from "./atoms/Button";
 import { NumberInput, SelectInput, TextInput } from "./atoms/Input";
 
 export function Grid(props: { s: number }) {
-  const { moveTo, setBpm, play, pause, removeSection, setName, setInstrument } =
-    useActions();
+  const {
+    moveTo,
+    setBpm,
+    play,
+    pause,
+    removeSection,
+    setName,
+    setInstrument,
+    setNpb,
+  } = useActions();
   const store = useStore();
 
   const section = () => store.sections[props.s];
@@ -32,6 +40,12 @@ export function Grid(props: { s: number }) {
           data={["bass", "guitar"]}
           onChange={(value) => setInstrument(props.s, value)}
         />
+        <SelectInput
+          label="notes"
+          value={section().notes[0].t}
+          data={["4n", "8n", "16n"]}
+          onChange={(value) => setNpb(props.s, value)}
+        />
         <Button onClick={() => play(props.s)}>play</Button>
         <Button onClick={pause}>stop</Button>
         <Button mode="danger" onClick={() => removeSection(props.s)}>
@@ -40,35 +54,39 @@ export function Grid(props: { s: number }) {
       </HStack>
       <div class={styles.grid}>
         <For each={section().notes}>
-          {(note, x) => (
-            <div
-              class={styles.col}
-              bool:data-selected={
-                store.cursor.s === props.s && store.cursor.x === x()
-              }
-            >
-              <Index each={instrument().strings}>
-                {(_, y) => (
-                  <div
-                    class={styles.cell}
-                    classList={{
-                      [styles.block]: x() % 8 === 0 || x() % 8 === 7,
-                      [styles.block_start]: x() % 8 === 0,
-                      [styles.block_end]: x() % 8 === 7,
-                    }}
-                    onClick={() => moveTo(props.s, x(), y)}
-                    bool:data-selected={
-                      store.cursor.s === props.s &&
-                      store.cursor.y === y &&
-                      store.cursor.x === x()
-                    }
-                  >
-                    <span>{note.notes[y] ?? ""}</span>
-                  </div>
-                )}
-              </Index>
-            </div>
-          )}
+          {(note, x) => {
+            const t = () => Number(note.t.replace("n", ""));
+            return (
+              <div
+                class={styles.col}
+                bool:data-selected={
+                  store.cursor.s === props.s && store.cursor.x === x()
+                }
+              >
+                <Index each={instrument().strings}>
+                  {(_, y) => (
+                    <div
+                      class={styles.cell}
+                      classList={{
+                        [styles.block]:
+                          x() % t() === 0 || x() % t() === t() - 1,
+                        [styles.block_start]: x() % t() === 0,
+                        [styles.block_end]: x() % t() === t() - 1,
+                      }}
+                      onClick={() => moveTo(props.s, x(), y)}
+                      bool:data-selected={
+                        store.cursor.s === props.s &&
+                        store.cursor.y === y &&
+                        store.cursor.x === x()
+                      }
+                    >
+                      <span>{note.notes[y] ?? ""}</span>
+                    </div>
+                  )}
+                </Index>
+              </div>
+            );
+          }}
         </For>
       </div>
     </VStack>
