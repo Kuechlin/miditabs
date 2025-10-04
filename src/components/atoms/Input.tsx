@@ -1,6 +1,6 @@
 import { NumberField } from "@kobalte/core/number-field";
 import { TextField } from "@kobalte/core/text-field";
-import { css, sva } from "@styles/css";
+import { sva } from "@styles/css";
 
 export function TextInput(props: {
   label?: string;

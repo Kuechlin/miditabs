@@ -1,6 +1,5 @@
 import { ParentProps } from "solid-js";
 import { Button } from "./Button";
-import { useStore } from "~/store";
 
 export function UploadButton(
   props: ParentProps<{

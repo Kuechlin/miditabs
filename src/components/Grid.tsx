@@ -1,9 +1,8 @@
-import { Button } from "./atoms/Button";
-import { NumberField } from "@kobalte/core/number-field";
 import { css } from "@styles/css";
 import { HStack, VStack } from "@styles/jsx";
 import { For, Index } from "solid-js";
 import { useActions, useStore } from "~/store";
+import { Button } from "./atoms/Button";
 import { NumberInput, TextInput } from "./atoms/Input";
 
 export function Grid(props: { s: number }) {
